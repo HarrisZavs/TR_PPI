@@ -3,8 +3,35 @@ import numpy as np
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc_auc_score, confusion_matrix
 
 # Load the primary dataset
-csv_file = r"C:\Users\harry\Desktop\TEST_1\FINAL_REDUCED_TEST_ALL_FEATURES_AND_PREDICTIONS.csv"
-df = pd.read_csv(csv_file)
+csv_file = r".\model_results\classification_testing_results\COMPARATIVE_TESTS\FINAL_REDUCED_TEST_ALL_FEATURES_AND_PREDICTIONS.csv"
+df = pd.read_csv(csv_file, sep=',')
+print(df)
+
+#--------------------------------Filter based on TT and DSCRIPT common PPIs-----------------------------------------------#
+# FIlter based on the 34, 362  PPIs that TT and DSCRIPT predicted
+tsv_df = pd.read_csv(r".\model_results\classification_testing_results\COMPARATIVE_TESTS\test_notebooks\TEST_TT_merged.predictions.tsv", sep='\t', header=None, names=['ensemblA', 'ensemblB','label', 'pred_prb'], usecols=['ensemblA', 'ensemblB', 'label'])
+print(tsv_df.shape)
+print(tsv_df['label'].value_counts())
+tsv_df=tsv_df.drop(['label'], axis=1)
+# Direct matches
+direct_matches = pd.merge(tsv_df, df, on=["ensemblA", "ensemblB"])
+
+# Reverse matches
+reverse_matches = pd.merge(tsv_df, df, left_on=["ensemblA", "ensemblB"], right_on=["ensemblB", "ensemblA"])
+
+# Normalize reverse_matches to have same column order as direct
+reverse_matches = reverse_matches.rename(columns={"ensemblA_x": "ensemblA", "ensemblB_x": "ensemblB"})[["ensemblA", "ensemblB"]]
+
+# Combine both
+common_pairs = pd.concat([direct_matches, reverse_matches])
+# common_pairs=common_pairs.drop_duplicates()
+common_pairs=common_pairs.dropna()
+# Optional: Save result
+#common_pairs.to_csv("common_pairs.csv", index=False)
+
+df= common_pairs
+print(df)
+#---------------------------------------------------------#
 
 # Define columns where NaNs should be removed
 columns_to_check = [
@@ -69,8 +96,8 @@ metrics_results["Best_Model"] = np.array(metrics_results["Best_Model"])
 metrics_results["Ensemble_Model"] = np.array(metrics_results["Ensemble_Model"])
 
 # Load additional CSV and TSV files with no headers
-csv_extra_file = r"C:\Users\harry\Desktop\TEST_1\test_notebooks\TEST_dscript_merged.predictions.csv"
-tsv_extra_file = r"C:\Users\harry\Desktop\TEST_1\test_notebooks\TEST_TT_merged.predictions.tsv"
+csv_extra_file = r".\model_results\classification_testing_results\COMPARATIVE_TESTS\test_notebooks\TEST_dscript_merged.predictions.csv"
+tsv_extra_file = r".\model_results\classification_testing_results\COMPARATIVE_TESTS\test_notebooks\TEST_TT_merged.predictions.tsv"
 
 df_csv_extra = pd.read_csv(csv_extra_file, header=None)
 df_tsv_extra = pd.read_csv(tsv_extra_file, header=None, sep="\t")
@@ -108,3 +135,4 @@ for i, metric_name in enumerate(metric_names):
 print("\n=== T&T Test Results ===")
 for i, metric_name in enumerate(metric_names):
     print(f"{metric_name}: {tsv_metrics[i]:.4f}")
+
