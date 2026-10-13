@@ -314,7 +314,7 @@ sudo python3 testing_multibiomarker_predictive_analytics_model_backend.py /Downl
   </tr>
   <tr>
    <th>19</th>
-   <td>Selected Comorbidities String</td>
+   <td>Selected Comorbidities String.</td>
    <td>The string with the selected comorbidities names, separated by commas or newline characters from the training phase</td>
    <td>NaN</td>
   </tr>
